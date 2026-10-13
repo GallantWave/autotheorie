@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Autotheorie Oefenen 🚗 - CBR Examen Trainer</title>
     <style>
         * {
@@ -10,15 +10,25 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #0F172A;
+            color: #FFFFFF;
+            overflow-x: hidden;
         }
 
         body {
-            background-color: #0F172A;
-            color: #FFFFFF;
-            padding: 20px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-start;
             min-height: 100vh;
         }
 
@@ -26,14 +36,14 @@
             width: 100%;
             max-width: 700px;
             background: #1E293B;
-            padding: 30px;
+            padding: 24px;
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
         h1 {
-            font-size: 28px;
+            font-size: 26px;
             text-align: center;
             margin-bottom: 8px;
             color: #FFFFFF;
@@ -74,7 +84,7 @@
             transition: background 0.2s, transform 0.1s;
         }
 
-        .chapter-btn:hover {
+        .chapter-btn:hover, .chapter-btn:active {
             background: #475569;
             transform: translateY(-2px);
         }
@@ -93,7 +103,7 @@
             transition: background 0.2s, transform 0.1s;
         }
 
-        .exam-btn:hover {
+        .exam-btn:hover, .exam-btn:active {
             background: #059669;
             transform: translateY(-2px);
         }
@@ -124,7 +134,7 @@
             transition: background 0.2s;
         }
 
-        .option-btn:hover {
+        .option-btn:hover, .option-btn:active {
             background: #475569;
         }
 
@@ -150,7 +160,7 @@
             margin-top: 10px;
         }
 
-        .action-btn:hover {
+        .action-btn:hover, .action-btn:active {
             background: #3b82f6;
         }
 
@@ -262,7 +272,7 @@
             {
                 title: "7. Wetgeving en documenten",
                 questions: [
-                    { question: "Welke papieren moet je altijd verplicht bij je hebben als je in Nederland auto rijdt?", options: ["Alleen je legitimatiebewijs", "Rijbewijs en het kentekenbewijs van het voertuig", "Alleen een verzekeringsbewijs op papier", "Geen enkele, alles staat digitaal bij de politie"], correct: 1 },
+                    { question: "Welke papieren moet je altijd verplicht bij je hebben als je in Nederland auto rijdt?", options: ["Alleen je legitimatiebewijs", "Rijbewijs en het kentekenbewijs van het voertuig", "Alleen een verzekeringsbewijs op papier", "Geen enkelem alles staat digitaal bij de politie"], correct: 1 },
                     { question: "Wat is het maximum promillage alcohol voor een beginnende bestuurder?", options: ["0.0 promille (wettelijk toegestaan is max 0.2)", "0.5 promille", "0.8 promille", "1.0 promille"], correct: 0 }
                 ]
             },
@@ -290,7 +300,6 @@
         const questionCounter = document.getElementById("question-counter");
         const resultText = document.getElementById("result-text");
 
-        // Hulpfunctie om een array willekeurig te husselen (Fisher-Yates Shuffle)
         function shuffleArray(array) {
             let shuffled = [...array];
             for (let i = shuffled.length - 1; i > 0; i--) {
@@ -311,22 +320,20 @@
             });
         }
 
-        // Starten per specifiek hoofdstuk
         function startChapter(index) {
             const chap = chapters[index];
             examTitle = chap.title;
-            activeQuestions = shuffleArray(chap.questions); // Ook binnen hoofdstuk geshuffled
+            activeQuestions = shuffleArray(chap.questions);
             startQuiz();
         }
 
-        // Starten willekeurig examen van alle hoofdstukken door elkaar
         function startFullExam() {
             examTitle = "Volledig CBR Proefexamen";
             let allQuestions = [];
             chapters.forEach(chap => {
                 allQuestions = allQuestions.concat(chap.questions);
             });
-            activeQuestions = shuffleArray(allQuestions); // Alle vragen willekeurig door elkaar
+            activeQuestions = shuffleArray(allQuestions);
             startQuiz();
         }
 
