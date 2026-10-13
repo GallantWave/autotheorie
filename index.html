@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autotheorie Oefenen 🚗</title>
+    <title>Autotheorie Oefenen 🚗 - CBR Examen Trainer</title>
     <style>
         * {
             margin: 0;
@@ -24,7 +24,7 @@
 
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 700px;
             background: #1E293B;
             padding: 30px;
             border-radius: 16px;
@@ -46,18 +46,63 @@
             font-size: 14px;
         }
 
-        .quiz-box {
+        .screen {
             display: none;
         }
 
-        .quiz-box.active {
+        .screen.active {
             display: block;
+        }
+
+        .chapter-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .chapter-btn {
+            background: #334155;
+            color: #FFFFFF;
+            border: none;
+            padding: 14px 18px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .chapter-btn:hover {
+            background: #475569;
+            transform: translateY(-2px);
+        }
+
+        .exam-btn {
+            background: #10B981;
+            color: #FFFFFF;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .exam-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
         }
 
         .question {
             font-size: 18px;
             margin-bottom: 20px;
             font-weight: 600;
+            line-height: 1.4;
         }
 
         .options {
@@ -91,7 +136,7 @@
             background: #EF4444 !important;
         }
 
-        .next-btn, .start-btn {
+        .action-btn {
             background: #518EF0;
             color: #FFFFFF;
             border: none;
@@ -102,9 +147,10 @@
             font-weight: bold;
             cursor: pointer;
             transition: background 0.2s;
+            margin-top: 10px;
         }
 
-        .next-btn:hover, .start-btn:hover {
+        .action-btn:hover {
             background: #3b82f6;
         }
 
@@ -120,112 +166,206 @@
         .score-card p {
             color: #94A3B8;
             margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .back-link {
+            background: transparent;
+            color: #94A3B8;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 16px;
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Autotheorie Leren 🚗</h1>
-        <p class="subtitle">Oefen je CBR autotheorie eenvoudig online</p>
+        <h1>CBR Autotheorie Trainer 🚗</h1>
+        <p class="subtitle">Oefen gericht per hoofdstuk of doe een willekeurig proefexamen</p>
 
-        <!-- Startscherm -->
-        <div id="start-screen" class="quiz-box active">
-            <p style="text-align: center; color: #94A3B8; margin-bottom: 20px;">
-                Test je kennis met officiële oefenvragen over voorrang, verkeersborden en snelheid.
-            </p>
-            <button class="start-btn" onclick="startQuiz()">Start Oefentoets</button>
+        <!-- Hoofdscherm -->
+        <div id="home-screen" class="screen active">
+            <!-- Knop voor willekeurige examenmodus -->
+            <button class="exam-btn" onclick="startFullExam()">🎲 Start Willekeurig CBR Proefexamen (Alle hoofdstukken)</button>
+
+            <p style="color: #94A3B8; margin-bottom: 16px; font-size: 15px;">Of kies een specifiek hoofdstuk om te oefenen:</p>
+            <div class="chapter-grid" id="chapter-list">
+                <!-- Wordt dynamisch gevuld -->
+            </div>
         </div>
 
         <!-- Vragen Scherm -->
-        <div id="quiz-screen" class="quiz-box">
-            <div id="question-counter" style="color: #94A3B8; font-size: 14px; margin-bottom: 8px;">Vraag 1 van 5</div>
+        <div id="quiz-screen" class="screen">
+            <button class="back-link" onclick="returnToHome()">← Terug naar hoofdmenu</button>
+            <div id="question-counter" style="color: #94A3B8; font-size: 14px; margin-bottom: 8px;">Vraag 1 van X</div>
             <div class="question" id="question-text">Hier komt de vraag...</div>
-            <div class="options" id="options-container">
-                <!-- Opties worden hier dynamisch ingeladen -->
-            </div>
-            <button class="next-btn" id="next-btn" style="display: none;" onclick="nextQuestion()">Volgende Vraag</button>
+            <div class="options" id="options-container"></div>
+            <button class="action-btn" id="next-btn" style="display: none;" onclick="nextQuestion()">Volgende Vraag</button>
         </div>
 
         <!-- Resultaat Scherm -->
-        <div id="result-screen" class="quiz-box score-card">
-            <h2>Toets Afgerond! 🎉</h2>
+        <div id="result-screen" class="screen score-card">
+            <h2>Examen Afgerond! 🎉</h2>
             <p id="result-text">Je hebt X van de Y vragen goed.</p>
-            <button class="start-btn" onclick="startQuiz()">Opnieuw Oefenen</button>
+            <button class="action-btn" onclick="returnToHome()">Terug naar Hoofdmenu</button>
         </div>
     </div>
 
     <script>
-        const questions = [
+        const chapters = [
             {
-                question: "Hoe hard mag je maximaal rijden op een autosnelweg in Nederland (tenzij anders aangegeven)?",
-                options: ["100 km/u (overdag)", "120 km/u", "130 km/u", "100 km/u de hele dag"],
-                correct: 0
+                title: "1. Gebruik van de weg",
+                questions: [
+                    { question: "Hoe hard mag je maximaal rijden op een autosnelweg in Nederland (tenzij borden anders aangeven)?", options: ["100 km/u (overdag)", "120 km/u", "130 km/u", "100 km/u de hele dag"], correct: 0 },
+                    { question: "Waar moet je zoveel mogelijk rijden op een autosnelweg met drie rijstroken?", options: ["Uitsluitend op de linker rijstrook", "Zoveel mogelijk rechts", "In het midden", "Dat mag je zelf kiezen"], correct: 1 },
+                    { question: "Wanneer mag je iemand rechts inhalen?", options: ["Dat mag nooit", "Als je in een file rijdt waar de rechterrijstrook sneller rijdt", "Als de bestuurder voor je linksaf wil voorsorteren", "Beide antwoorden 2 en 3 zijn juist"], correct: 3 }
+                ]
             },
             {
-                question: "Wie heeft er voorrang op een gelijkwaardig kruispunt?",
-                options: ["Voetgangers altijd", "Bestuurders van rechts", "Bestuurders van links", "Degene die het hardst rijdt"],
-                correct: 1
+                title: "2. Voorrang en voor laten gaan",
+                questions: [
+                    { question: "Wie heeft er voorrang op een onoverzichtelijk gelijkwaardig kruispunt?", options: ["Bestuurders van links", "Bestuurders van rechts", "Degene die het hardst rijdt", "Grote voertuigen altijd"], correct: 1 },
+                    { question: "Je slaat linksaf op een kruispunt. Wie moet je voor laten gaan?", options: ["Alleen tegemoetkomende bestuurders die rechtdoor gaan", "Tegemoetkomende bestuurders én bestuurders die rechts afslaan", "Tegemoetkomende bestuurders die rechtdoor gaan óf rechts afslaan op dezelfde weg", "Niemand, jij hebt voorrang"], correct: 2 }
+                ]
             },
             {
-                question: "Wat betekent een rond blauw bord met een witte pijl naar rechts?",
-                options: ["Je mag hier niet rechtsaf", "Verplichte rijrichting: rechts", "Uitsluitend voor vrachtwagens", "Advisservice rechts"],
-                correct: 1
+                title: "3. Bijzondere wegen, weggedeelten en manoeuvres",
+                questions: [
+                    { question: "Wat is de maximumsnelheid binnen een officiële woonerf?", options: ["15 km/u", "30 km/u", "Stapvoets (ongeveer 15 km/u)", "50 km/u"], correct: 2 },
+                    { question: "Mag je keren (een U-turn maken) op een autosnelweg?", options: ["Ja, als het rustig is", "Nee, dat is ten strengste verboden", "Alleen bij een noodgeval", "Ja, via de vluchtstrook"], correct: 1 }
+                ]
             },
             {
-                question: "Wanneer ben je verplicht je gordel te dragen?",
-                options: ["Alleen buiten de bebouwde kom", "Alleen sneller dan 50 km/u", "Altijd als de auto rijdt", "Alleen op de snelweg"],
-                correct: 2
+                title: "4. Veilig rijden met het voertuig en noodsituaties",
+                questions: [
+                    { question: "Wat moet je doen als je auto in een slip raakt door aquaplaning?", options: ["Hard remmen en aan het stuur rukken", "Gas loslaten, koppeling indrukken en stuur recht houden tot je grip terug hebt", "Direct de handrem aantrekken", "Vol gas bijgeven om er doorheen te trekken"], correct: 1 },
+                    { question: "Wat is een veilige volgafstand op de snelweg onder normale omstandigheden?", options: ["1 seconde", "Minstens 2 seconden (de twee-secondenregel)", "5 meter", "Zoveel mogelijk bumperkleven"], correct: 1 }
+                ]
             },
             {
-                question: "Wat is de maximum alcohollimiet voor een beginnende bestuurder?",
-                options: ["0.0 promille (0.2 mag)", "0.2 promille (ongeveer 1 glas)", "0.5 promille", "0.8 promille"],
-                correct: 1
+                title: "5. Verkeerstekens en aanwijzingen",
+                questions: [
+                    { question: "Wat betekent een rood kruis boven een rijstrook op de snelweg?", options: ["Je mag hier tijdelijk parkeren", "De rijstrook is afgesloten, je mag er niet rijden", "Maximumsnelheid is 90 km/u", "Alleen voor vrachtwagens bestemd"], correct: 1 },
+                    { question: "Wie geeft er voorrangsregels aan als een verkeersregelaar een stopteken geeft met gestrekte arm omhoog?", options: ["Alleen het overige verkeer", "Iedereen moet stoppen voor de kruising", "Alleen voetgangers", "Je mag doorrijden als je al op de kruising bent"], correct: 1 }
+                ]
+            },
+            {
+                title: "6. Verantwoorde verkeersdeelname en milieubewust",
+                questions: [
+                    { question: "Wat is het voordeel van 'het nieuwe rijden'?", options: ["Je remt nooit meer", "Brandstofbesparing en minder CO2-uitstoot", "Je auto gaat sneller optrekken", "Je hoeft je banden nooit meer op te pompen"], correct: 1 },
+                    { question: "Wat is een groot risico van vermoeidheid achter het stuur?", options: ["Langzamere reactietijd en microslaapjes", "Dat je radio uitvalt", "Dat je auto meer brandstof verbruikt", "Geen enkel risico"], correct: 0 }
+                ]
+            },
+            {
+                title: "7. Wetgeving en documenten",
+                questions: [
+                    { question: "Welke papieren moet je altijd verplicht bij je hebben als je in Nederland auto rijdt?", options: ["Alleen je legitimatiebewijs", "Rijbewijs en het kentekenbewijs van het voertuig", "Alleen een verzekeringsbewijs op papier", "Geen enkele, alles staat digitaal bij de politie"], correct: 1 },
+                    { question: "Wat is het maximum promillage alcohol voor een beginnende bestuurder?", options: ["0.0 promille (wettelijk toegestaan is max 0.2)", "0.5 promille", "0.8 promille", "1.0 promille"], correct: 0 }
+                ]
+            },
+            {
+                title: "8. Voertuigkennis en lading",
+                questions: [
+                    { question: "Wanneer moeten je autolichten branden?", options: ["Alleen als het pikkedonker is", "Bij duisternis, slecht zicht of overdag bij onverlichte situaties", "Nooit overdag", "Alleen op de snelweg"], correct: 1 },
+                    { question: "Hoeveel mag lading aan de achterzijde van een personenauto maximaal uitsteken (zonder markering)?", options: ["Niks, het mag nooit uitsteken", "Maximaal 1 meter", "Maximaal 5 meter", "Tot wel 10 meter"], correct: 1 }
+                ]
             }
         ];
 
+        let activeQuestions = [];
         let currentQuestionIndex = 0;
         let score = 0;
+        let examTitle = "";
 
-        const startScreen = document.getElementById("start-screen");
+        const homeScreen = document.getElementById("home-screen");
         const quizScreen = document.getElementById("quiz-screen");
         const resultScreen = document.getElementById("result-screen");
+        const chapterList = document.getElementById("chapter-list");
         const questionText = document.getElementById("question-text");
         const optionsContainer = document.getElementById("options-container");
         const nextBtn = document.getElementById("next-btn");
         const questionCounter = document.getElementById("question-counter");
         const resultText = document.getElementById("result-text");
 
+        // Hulpfunctie om een array willekeurig te husselen (Fisher-Yates Shuffle)
+        function shuffleArray(array) {
+            let shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function initHome() {
+            chapterList.innerHTML = "";
+            chapters.forEach((chap, index) => {
+                const btn = document.createElement("button");
+                btn.classList.add("chapter-btn");
+                btn.innerText = chap.title;
+                btn.onclick = () => startChapter(index);
+                chapterList.appendChild(btn);
+            });
+        }
+
+        // Starten per specifiek hoofdstuk
+        function startChapter(index) {
+            const chap = chapters[index];
+            examTitle = chap.title;
+            activeQuestions = shuffleArray(chap.questions); // Ook binnen hoofdstuk geshuffled
+            startQuiz();
+        }
+
+        // Starten willekeurig examen van alle hoofdstukken door elkaar
+        function startFullExam() {
+            examTitle = "Volledig CBR Proefexamen";
+            let allQuestions = [];
+            chapters.forEach(chap => {
+                allQuestions = allQuestions.concat(chap.questions);
+            });
+            activeQuestions = shuffleArray(allQuestions); // Alle vragen willekeurig door elkaar
+            startQuiz();
+        }
+
         function startQuiz() {
             currentQuestionIndex = 0;
             score = 0;
-            startScreen.classList.remove("active");
+            homeScreen.classList.remove("active");
             resultScreen.classList.remove("active");
             quizScreen.classList.add("active");
             showQuestion();
         }
 
+        function returnToHome() {
+            quizScreen.classList.remove("active");
+            resultScreen.classList.remove("active");
+            homeScreen.classList.add("active");
+        }
+
         function showQuestion() {
             nextBtn.style.display = "none";
-            const currentQ = questions[currentQuestionIndex];
-            questionCounter.innerText = `Vraag ${currentQuestionIndex + 1} van ${questions.length}`;
+            const currentQ = activeQuestions[currentQuestionIndex];
+            
+            questionCounter.innerText = `${examTitle} — Vraag ${currentQuestionIndex + 1} van ${activeQuestions.length}`;
             questionText.innerText = currentQ.question;
             optionsContainer.innerHTML = "";
 
-            currentQ.options.forEach((option, index) => {
+            currentQ.options.forEach((option, optIndex) => {
                 const btn = document.createElement("button");
                 btn.classList.add("option-btn");
                 btn.innerText = option;
-                btn.onclick = () => selectOption(index, btn);
+                btn.onclick = () => selectOption(optIndex, btn);
                 optionsContainer.appendChild(btn);
             });
         }
 
         function selectOption(selectedIndex, selectedBtn) {
-            const currentQ = questions[currentQuestionIndex];
+            const currentQ = activeQuestions[currentQuestionIndex];
             const buttons = optionsContainer.getElementsByTagName("button");
 
-            // Schakel alle knoppen uit nadat er één is gekozen
             for (let btn of buttons) {
                 btn.disabled = true;
             }
@@ -243,7 +383,7 @@
 
         function nextQuestion() {
             currentQuestionIndex++;
-            if (currentQuestionIndex < questions.length) {
+            if (currentQuestionIndex < activeQuestions.length) {
                 showQuestion();
             } else {
                 showResult();
@@ -253,8 +393,10 @@
         function showResult() {
             quizScreen.classList.remove("active");
             resultScreen.classList.add("active");
-            resultText.innerText = `Je hebt ${score} van de ${questions.length} vragen goed beantwoord!`;
+            resultText.innerText = `Je hebt ${score} van de ${activeQuestions.length} vragen goed beantwoord in dit examen!`;
         }
+
+        initHome();
     </script>
 </body>
 </html>
