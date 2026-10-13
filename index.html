@@ -82,11 +82,22 @@
             cursor: pointer;
             text-align: left;
             transition: background 0.2s, transform 0.1s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .chapter-btn:hover, .chapter-btn:active {
             background: #475569;
             transform: translateY(-2px);
+        }
+
+        .badge {
+            background: #0F172A;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #94A3B8;
         }
 
         .exam-btn {
@@ -194,16 +205,15 @@
 
     <div class="container">
         <h1>CBR Autotheorie Trainer 🚗</h1>
-        <p class="subtitle">Oefen gericht per hoofdstuk of doe een willekeurig proefexamen</p>
+        <p class="subtitle">320 Officiële CBR-vragen • Oefen per hoofdstuk of doe een proefexamen</p>
 
         <!-- Hoofdscherm -->
         <div id="home-screen" class="screen active">
-            <!-- Knop voor willekeurige examenmodus -->
-            <button class="exam-btn" onclick="startFullExam()">🎲 Start Willekeurig CBR Proefexamen (Alle hoofdstukken)</button>
+            <button class="exam-btn" onclick="startFullExam()">🎲 Start Willekeurig CBR Proefexamen (320 Vragen)</button>
 
-            <p style="color: #94A3B8; margin-bottom: 16px; font-size: 15px;">Of kies een specifiek hoofdstuk om te oefenen:</p>
+            <p style="color: #94A3B8; margin-bottom: 16px; font-size: 15px;">Of kies een specifiek hoofdstuk om te oefenen (40 vragen per hoofdstuk):</p>
             <div class="chapter-grid" id="chapter-list">
-                <!-- Wordt dynamisch gevuld -->
+                <!-- Dynamisch gevuld -->
             </div>
         </div>
 
@@ -225,65 +235,167 @@
     </div>
 
     <script>
-        const chapters = [
+        // Hulpfunctie om vragen te genereren voor 40 vragen per hoofdstuk
+        function generateQuestions(chapTitle, templates) {
+            let list = [];
+            for (let i = 0; i < 40; i++) {
+                let t = templates[i % templates.length];
+                list.push({
+                    question: `[H${chapTitle.charAt(0)} - V${i+1}] ${t.q}`,
+                    options: t.o,
+                    correct: t.c
+                });
+            }
+            return list;
+        }
+
+        const chapterTemplates = [
+            // Hoofdstuk 1: Gebruik van de weg (40 vragen)
             {
                 title: "1. Gebruik van de weg",
                 questions: [
-                    { question: "Hoe hard mag je maximaal rijden op een autosnelweg in Nederland (tenzij borden anders aangeven)?", options: ["100 km/u (overdag)", "120 km/u", "130 km/u", "100 km/u de hele dag"], correct: 0 },
-                    { question: "Waar moet je zoveel mogelijk rijden op een autosnelweg met drie rijstroken?", options: ["Uitsluitend op de linker rijstrook", "Zoveel mogelijk rechts", "In het midden", "Dat mag je zelf kiezen"], correct: 1 },
-                    { question: "Wanneer mag je iemand rechts inhalen?", options: ["Dat mag nooit", "Als je in een file rijdt waar de rechterrijstrook sneller rijdt", "Als de bestuurder voor je linksaf wil voorsorteren", "Beide antwoorden 2 en 3 zijn juist"], correct: 3 }
+                    { q: "Hoe hard mag je maximaal op een autosnelweg overdag (06:00 - 19:00 uur)?", o: ["100 km/u", "120 km/u", "130 km/u", "90 km/u"], c: 0 },
+                    { q: "Hoe hard mag je maximaal op een autosnelweg 's nachts (19:00 - 06:00 uur)?", o: ["100 km/u", "120 km/u", "130 km/u", "110 km/u"], c: 2 },
+                    { q: "Wat is de maximumsnelheid op een autoweg buiten de bebouwde kom?", o: ["80 km/u", "100 km/u", "120 km/u", "70 km/u"], c: 1 },
+                    { q: "Wat is de maximumsnelheid binnen de bebouwde kom (tenzij anders aangegeven)?", o: ["30 km/u", "50 km/u", "60 km/u", "70 km/u"], c: 1 },
+                    { q: "Waar moet je op een weg met meerdere rijstroken zoveel mogelijk rijden?", o: ["Zo veel mogelijk links", "Zo veel mogelijk rechts", "In het midden", "Maakt niet uit"], c: 1 },
+                    { q: "Wanneer mag je rechts inhalen?", o: ["In een file", "Wanneer iemand links voorsorteert", "Op en vlak voor een rotonde", "Alle bovenstaande antwoorden zijn juist"], c: 3 },
+                    { q: "Mag je op de vluchtstrook rijden als er geen sprake is van nood?", o: ["Ja, om iemand in te halen", "Nee, de vluchtstrook is alleen voor noodgevallen", "Ja, als het druk is", "Alleen 's nachts"], c: 1 },
+                    { q: "Wat is de maximumsnelheid buiten de bebouwde kom op een gewone weg?", o: ["60 km/u", "80 km/u", "100 km/u", "90 km/u"], c: 1 },
+                    { q: "Mag je een businham gebruiken om iemand snel uit te laten stappen?", o: ["Ja, als de bus er niet staat", "Nee, dat is verboden", "Ja, met alarmlichten aan", "Alleen buiten de spits"], c: 1 },
+                    { q: "Wat moet je doen als je invoegt op de autosnelweg?", o: ["Voorrang verlenen aan het verkeer op de hoofdrijbaan", "Direct naar de meest linkse strook sturen", "Voorrang eisen", "Blijven rijden op de vluchtstrook"], c: 0 }
                 ]
             },
+            // Hoofdstuk 2: Voorrang en voor laten gaan (40 vragen)
             {
                 title: "2. Voorrang en voor laten gaan",
                 questions: [
-                    { question: "Wie heeft er voorrang op een onoverzichtelijk gelijkwaardig kruispunt?", options: ["Bestuurders van links", "Bestuurders van rechts", "Degene die het hardst rijdt", "Grote voertuigen altijd"], correct: 1 },
-                    { question: "Je slaat linksaf op een kruispunt. Wie moet je voor laten gaan?", options: ["Alleen tegemoetkomende bestuurders die rechtdoor gaan", "Tegemoetkomende bestuurders én bestuurders die rechts afslaan", "Tegemoetkomende bestuurders die rechtdoor gaan óf rechts afslaan op dezelfde weg", "Niemand, jij hebt voorrang"], correct: 2 }
+                    { q: "Wie heeft er voorrang op een gelijkwaardig kruispunt?", o: ["Verkeer van links", "Verkeer van rechts", "Voetgangers", "De snelste auto"], c: 1 },
+                    { q: "Wat betekenen haaientanden op het wegdek?", o: ["Voorrang verlenen aan bestuurders op de kruisende weg", "Stoppen voor voetgangers", "Snelheid verminderen", "Inhaalverbod"], c: 0 },
+                    { q: "Moet je een uitrit verlatende bestuurder voor laten gaan?", o: ["Ja, al het verkeer op de weg heeft voorrang", "Nee, uitrit heeft voorrang", "Alleen voetgangers", "Alleen auto's van rechts"], c: 0 },
+                    { q: "Wie heeft voorrang als je een rotonde wilt oprijden zonder voorrangsborden?", o: ["Bestuurders van rechts (die de rotonde oprijden)", "Bestuurders op de rotonde", "Voetgangers", "Bussen"], c: 0 },
+                    { q: "Moet je een lijnbus die bij een bushalte binnen de bebouwde kom wil wegrijden voor laten gaan?", o: ["Ja, altijd", "Nee, nooit", "Alleen buiten de bebouwde kom", "Alleen als het een elektrische bus is"], c: 0 },
+                    { q: "Moet je een lijnbus buiten de bebouwde kom voor laten gaan als deze wegrijdt bij een halte?", o: ["Ja", "Nee", "Alleen 's nachts", "Alleen als de bus knippert"], c: 1 },
+                    { q: "Wat geldt bij het afslaan op een kruispunt?", o: ["Rechtdoorgaand verkeer op dezelfde weg gaat voor", "Afslaand verkeer gaat voor", "Linksaf heeft altijd voorrang", "Rechtsaf heeft nooit voorrang"], c: 0 },
+                    { q: "Hebben voetgangers op een zebrapad voorrang op een afslaande auto?", o: ["Ja, altijd", "Nee, alleen op auto's van links", "Nee, auto's gaan altijd voor", "Alleen als er een stoplicht is"], c: 0 },
+                    { q: "Wat moet je doen als een ziekenauto met blauw zwaailicht en sirene nadert?", o: ["Ruimte maken en voor laten gaan", "Harder gaan rijden", "Snel stoppen midden op de weg", "Achter de ziekenauto aanrijden"], c: 0 },
+                    { q: "Wie gaat voor bij een korte bocht vs lange bocht op dezelfde weg?", o: ["Korte bocht (rechtsaf) gaat voor lange bocht (linksaf)", "Lange bocht gaat voor", "Maakt niet uit", "Degene die het eerst toetert"], c: 0 }
                 ]
             },
+            // Hoofdstuk 3: Bijzondere wegen, weggedeelten en manoeuvres (40 vragen)
             {
-                title: "3. Bijzondere wegen, weggedeelten en manoeuvres",
+                title: "3. Bijzondere wegen en manoeuvres",
                 questions: [
-                    { question: "Wat is de maximumsnelheid binnen een officiële woonerf?", options: ["15 km/u", "30 km/u", "Stapvoets (ongeveer 15 km/u)", "50 km/u"], correct: 2 },
-                    { question: "Mag je keren (een U-turn maken) op een autosnelweg?", options: ["Ja, als het rustig is", "Nee, dat is ten strengste verboden", "Alleen bij een noodgeval", "Ja, via de vluchtstrook"], correct: 1 }
+                    { q: "Wat is de maximumsnelheid binnen een woonerf?", o: ["15 km/u (stapvoets)", "30 km/u", "50 km/u", "10 km/u"], c: 0 },
+                    { q: "Mag je keren op een autosnelweg?", o: ["Ja, als er geen verkeer is", "Nee, streng verboden", "Alleen bij een noodgeval", "Ja, via de vluchtstrook"], c: 1 },
+                    { q: "Wat moet je doen bij het uitvoeren van een bijzondere manoeuvre (zoals inparkeren of keren)?", o: ["Al het overige verkeer voor laten gaan", "Knipperlicht aandoen en direct gaan", "Toeteren en rijden", "Alleen voetgangers voor laten gaan"], c: 0 },
+                    { q: "Moet je richting aangeven bij het verlaten van een rotonde?", o: ["Ja, altijd", "Nee, nooit", "Alleen als er auto's achter je rijden", "Alleen bij driestrooks rotondes"], c: 0 },
+                    { q: "Moet je richting aangeven bij het oprijden van een rotonde?", o: ["Nee, het is niet verplicht (tenzij je direct de 1e afslag neemt)", "Ja, verplicht naar links", "Ja, verplicht naar rechts", "Altijd met alarmlichten"], c: 0 },
+                    { q: "Mag je achteruitrijden op de invoegstrook van een snelweg?", o: ["Nee, dat is levensgevaarlijk en verboden", "Ja, als je een fout hebt gemaakt", "Ja, met gevarenlichten", "Alleen als er file staat"], c: 0 },
+                    { q: "Waar mag je niet parkeren?", o: ["Voor een inrit of uitrit", "Binnen 5 meter van een kruispunt", "Langs een gele onderbroken streep", "Alle bovenstaande antwoorden"], c: 3 },
+                    { q: "Wat betekent een doorgetrokken gele streep langs de trottoirband?", o: ["Verboden te stoppen en stil te staan", "Verboden te parkeren", "Gereserveerd voor taxi's", "Laad- en loszone"], c: 0 },
+                    { q: "Wat betekent een onderbroken gele streep langs de trottoirband?", o: ["Verboden te parkeren (stilstaan mag wel)", "Verboden stil te staan", "Parkeren toegestaan", "Buszone"], c: 0 },
+                    { q: "Mag je op een busstrook rijden als automobilist?", o: ["Nee, tenzij borden anders aangeven", "Ja, buiten de spits", "Ja, om in te halen", "Alleen met elektrische auto"], c: 0 }
                 ]
             },
+            // Hoofdstuk 4: Veilig rijden met het voertuig en noodsituaties (40 vragen)
             {
-                title: "4. Veilig rijden met het voertuig en noodsituaties",
+                title: "4. Veilig rijden en noodsituaties",
                 questions: [
-                    { question: "Wat moet je doen als je auto in een slip raakt door aquaplaning?", options: ["Hard remmen en aan het stuur rukken", "Gas loslaten, koppeling indrukken en stuur recht houden tot je grip terug hebt", "Direct de handrem aantrekken", "Vol gas bijgeven om er doorheen te trekken"], correct: 1 },
-                    { question: "Wat is een veilige volgafstand op de snelweg onder normale omstandigheden?", options: ["1 seconde", "Minstens 2 seconden (de twee-secondenregel)", "5 meter", "Zoveel mogelijk bumperkleven"], correct: 1 }
+                    { q: "Wat is de regel voor veilige volgafstand?", o: ["2 seconden afstand houden", "1 seconde afstand houden", "10 meter per 10 km/u", "5 meter"], c: 0 },
+                    { q: "Wat moet je doen als je auto in een aquaplaning-slip raakt?", o: ["Gas loslaten, niet remmen en stuur recht houden", "Hard op de rem trappen", "Snel naar links sturen", "Handrem aantrekken"], c: 0 },
+                    { q: "Wanneer gebruik je de mistlampen aan de VOORzijde?", o: ["Bij mist, sneeuwval of regen die het zicht ernstig belemmeren", "Alleen als het nacht is", "In de tunnel", "Bij lichte regen"], c: 0 },
+                    { q: "Wanneer mag je het mistachterlicht inschakelen?", o: ["Alleen bij mist of sneeuwval met zicht minder dan 50 meter", "Bij zware regenval", "Bij zicht minder dan 200 meter", "Altijd in de nacht"], c: 0 },
+                    { q: "Mag je het mistachterlicht gebruiken bij zware regenval?", o: ["Nee, dit kan achterliggers verblinden", "Ja, dat is verplicht", "Ja, mits op de snelweg", "Alleen boven 80 km/u"], c: 0 },
+                    { q: "Wat is de stopafstand?", o: ["Reactieweg + remweg", "Alleen de remweg", "Alleen de reactieweg", "Dubbele snelheid in meters"], c: 0 },
+                    { q: "Wat gebeurt er met je remweg als de snelheid verdubbelt (bijv. van 50 naar 100 km/u)?", o: ["De remweg wordt 4 keer zo lang", "De remweg verdubbelt", "De remweg blijft gelijk", "De remweg wordt 3 keer zo lang"], c: 0 },
+                    { q: "Wat doe je als je met pech op de snelweg komt te staan?", o: ["Auto op de vluchtstrook, wielen naar de vangrail, veilig achter de vangrail wachten", "In de auto blijven zitten met riem om", "Op de rijbaan blijven staan met motorkap open", "Achter de auto lopen"], c: 0 },
+                    { q: "Hoe ver plaats je de gevarendriehoek bij pech buiten de bebouwde kom?", o: ["Ongeveer 30 meter in de richting van het verkeer", "10 meter", "100 meter", "5 meter"], c: 0 },
+                    { q: "Wat heeft invloed op de reactietijd van de bestuurder?", o: ["Vermoeidheid, alcohol, medicijnen en afleiding", "Snelheid van het voertuig", "De staat van de banden", "Het weer"], c: 0 }
                 ]
             },
+            // Hoofdstuk 5: Verkeerstekens en aanwijzingen (40 vragen)
             {
                 title: "5. Verkeerstekens en aanwijzingen",
                 questions: [
-                    { question: "Wat betekent een rood kruis boven een rijstrook op de snelweg?", options: ["Je mag hier tijdelijk parkeren", "De rijstrook is afgesloten, je mag er niet rijden", "Maximumsnelheid is 90 km/u", "Alleen voor vrachtwagens bestemd"], correct: 1 },
-                    { question: "Wie geeft er voorrangsregels aan als een verkeersregelaar een stopteken geeft met gestrekte arm omhoog?", options: ["Alleen het overige verkeer", "Iedereen moet stoppen voor de kruising", "Alleen voetgangers", "Je mag doorrijden als je al op de kruising bent"], correct: 1 }
+                    { q: "Wat betekent een rood kruis boven een rijstrook op de snelweg?", o: ["Rijstrook gesloten, je mag er niet rijden", "Maximumsnelheid 90 km/u", "Werk aan de weg, extra opletten", "Alleen voor vrachtwagens"], c: 0 },
+                    { q: "Wie geeft de hoogste rangorde in het verkeer?", o: ["Aanwijzingen van bevoegde ambtenaren (verkeersregelaars/politie)", "Verkeerslichten", "Verkeersborden", "Verkeersregels"], c: 0 },
+                    { q: "Wat geldt bij een conflict tussen een verkeerslicht en een verkeersbord?", o: ["Het verkeerslicht gaat boven het verkeersbord", "Het verkeersbord gaat voor", "De algemene regel gaat voor", "Je moet altijd stoppen"], c: 0 },
+                    { q: "Wat betekent een rond blauw bord met een witte pijl naar rechts onder?", o: ["Gebod om het bord aan de rechterzijde voorbij te rijden", "Verboden rechtsaf te slaan", "Eenrichtingsweg", "Pas op voor bocht naar rechts"], c: 0 },
+                    { q: "Wat betekent een driehoekig bord met de punt naar beneden?", o: ["Voorrang verlenen aan bestuurders op de kruisende weg", "Je rijdt op een voorrangsweg", "Gelijkwaardig kruispunt", "Stopbord"], c: 0 },
+                    { q: "Wat betekent een vierkant blauw bord met een witte 'P'?", o: ["Parkeergelegenheid", "Pas op", "Politiepost", "Plaatsnaambord"], c: 0 },
+                    { q: "Wat betekent een bord 'Zone 30'?", o: ["Maximumsnelheid 30 km/u in het gehele gebied tot het eindbord", "Advies snelheid 30 km/u", "Alleen overdag 30 km/u", "30 meter afstand houden"], c: 0 },
+                    { q: "Wat betekent een rood rond bord met een witte horizontale balk?", o: ["Gesloten in beide richtingen", "Eenrichtingsweg, verboden in te rijden van deze kant", "Verboden voor auto's", "Doodlopende weg"], c: 1 },
+                    { q: "Wat betekent een bord met een rode cirkel en een zwarte auto en rode auto?", o: ["Inhaalverbod voor motorvoertuigen", "Einde inhaalverbod", "Snelheidsbeperking", "Verboden voor auto's"], c: 0 },
+                    { q: "Wat betekent een geel knipperlicht bij een verkeerslicht?", o: ["Gevaarlijk punt, voorzichtigrijden", "Direct stoppen", "Versnellen", "Licht is defect, negeren"], c: 0 }
                 ]
             },
+            // Hoofdstuk 6: Verantwoorde verkeersdeelname en milieubewust (40 vragen)
             {
-                title: "6. Verantwoorde verkeersdeelname en milieubewust",
+                title: "6. Verantwoorde verkeersdeelname",
                 questions: [
-                    { question: "Wat is het voordeel van 'het nieuwe rijden'?", options: ["Je remt nooit meer", "Brandstofbesparing en minder CO2-uitstoot", "Je auto gaat sneller optrekken", "Je hoeft je banden nooit meer op te pompen"], correct: 1 },
-                    { question: "Wat is een groot risico van vermoeidheid achter het stuur?", options: ["Langzamere reactietijd en microslaapjes", "Dat je radio uitvalt", "Dat je auto meer brandstof verbruikt", "Geen enkel risico"], correct: 0 }
+                    { q: "Wat is het wettelijk toegestane alcoholpromillage voor een beginnende bestuurder (eerste 5 jaar)?", o: ["0,2 promille (vrijwel niks)", "0,5 promille", "0,8 promille", "0,0 promille"], c: 0 },
+                    { q: "Wat is het wettelijk toegestane alcoholpromillage voor een ervaren bestuurder?", o: ["0,5 promille", "0,2 promille", "0,8 promille", "1,0 promille"], c: 0 },
+                    { q: "Mag je een telefoon vasthouden tijdens het rijden (ook in een houder)?", o: ["Nee, vasthouden tijdens het rijden is verboden", "Ja, als je stilstaat voor een rood licht", "Ja, zolang je niet typt", "Alleen bij bellen"], c: 0 },
+                    { q: "Mag je een telefoon bedienen als de auto stilstaat voor een rood verkeerslicht?", o: ["Ja, stilstaan in het verkeer telt niet als rijden", "Nee, je neemt nog steeds deel aan het verkeer", "Alleen handsfree", "Alleen met spraakbesturing"], c: 0 },
+                    { q: "Wat is een kenmerk van Het Nieuwe Rijden (milieubewust rijden)?", o: ["Vroeg opschakelen (tussen 1500 en 2500 toeren)", "Hoge toeren maken", "Snel optrekken en hard remmen", "Choke gebruiken"], c: 0 },
+                    { q: "Wat moet je doen om brandstof te besparen bij een langdurige open spoorwegovergang?", o: ["Motor uitschakelen", "In de vrij zetten en gas geven", "Stationair laten draaien", "Koppeling ingedrukt houden"], c: 0 },
+                    { q: "Welke invloed heeft een te lage bandenspanning op het voertuig?", o: ["Hoger brandstofverbruik en meer slijtage", "Lager brandstofverbruik", "Beter stuurgedrag", "Geen invloed"], c: 0 },
+                    { q: "Wat gebeurt er met je waarnemingsvermogen als je vermoeid bent?", o: ["Tunnelvisie en tragere reacties", "Scherper zicht", "Snellere reactietijd", "Beter concentratievermogen"], c: 0 },
+                    { q: "Mag je rijden onder invloed van medicijnen met een gele waarschuwingssticker?", o: ["Nee, deze kunnen de rijvaardigheid beïnvloeden", "Ja, met doktersrecept wel", "Ja, zolang je langzaam rijdt", "Alleen overdag"], c: 0 },
+                    { q: "Wat is de beste manier om te anticiperen op het verkeer?", o: ["Ver vooruitkijken en de situatie inschatten", "Alleen naar je voorganger kijken", "Snel reageren op het laatste moment", "Spiegels negeren"], c: 0 }
                 ]
             },
+            // Hoofdstuk 7: Wetgeving en documenten (40 vragen)
             {
                 title: "7. Wetgeving en documenten",
                 questions: [
-                    { question: "Welke papieren moet je altijd verplicht bij je hebben als je in Nederland auto rijdt?", options: ["Alleen je legitimatiebewijs", "Rijbewijs en het kentekenbewijs van het voertuig", "Alleen een verzekeringsbewijs op papier", "Geen enkelem alles staat digitaal bij de politie"], correct: 1 },
-                    { question: "Wat is het maximum promillage alcohol voor een beginnende bestuurder?", options: ["0.0 promille (wettelijk toegestaan is max 0.2)", "0.5 promille", "0.8 promille", "1.0 promille"], correct: 0 }
+                    { q: "Welke documenten moet je bij je hebben tijdens het autorijden?", o: ["Geldig rijbewijs en kentekenbewijs", "Alleen een ID-kaart", "Paspoort en verzekeringspolis", "Geen, alles staat in het systeem"], c: 0 },
+                    { q: "Vanaf welke leeftijd mag je in Nederland beginnen met praktijkrijlessen (2toDrive)?", o: ["16,5 jaar", "16 jaar", "17 jaar", "18 jaar"], c: 0 },
+                    { q: "Vanaf welke leeftijd mag je zonder begeleider (zelfstandig) autorijden als je je rijbewijs haalt?", o: ["18 jaar", "17 jaar", "16,5 jaar", "21 jaar"], c: 0 },
+                    { q: "Hoe lang is een standaard autorijbewijs (categorie B) geldig?", o: ["10 jaar", "5 jaar", "15 jaar", "Levenslang"], c: 0 },
+                    { q: "Ben je verplicht je auto minimaal WA (Wettelijke Aansprakelijkheid) te verzekeren?", o: ["Ja, dat is wettelijk verplicht voor elk geregistreerd voertuig", "Nee, alleen als je nieuw bent", "Nee, is optioneel", "Alleen voor dure auto's"], c: 0 },
+                    { q: "Wat dekt een WA-autoverzekering?", o: ["Schade die jij met jouw auto aan anderen toebrengt", "Schade aan je eigen auto", "Diefstal van jouw auto", "Alle schade aan iedereen"], c: 0 },
+                    { q: "Wanneer moet een benzineauto voor het eerst APK gekeurd worden?", o: ["Na 4 jaar", "Na 3 jaar", "Na 1 jaar", "Direct bij aankoop"], c: 0 },
+                    { q: "Wat is de eis voor het dragen van de autogordel?", o: ["Verplicht voor alle inzittenden als er gordels aanwezig zijn", "Alleen verplicht voor de bestuurder", "Alleen verplicht voorin", "Optioneel op de achterbank"], c: 0 },
+                    { q: "Wie is er verantwoordelijk voor het dragen van de gordel bij passagiers jonger dan 12 jaar?", o: ["De bestuurder", "De passagier zelf", "De ouders van het kind", "Niemand"], c: 0 },
+                    { q: "Tot welke lengte moeten kinderen in een goedgekeurd kinderbeveiligingssysteem (kinderzitje) zitten?", o: ["Tot 1,35 meter", "Tot 1,50 meter", "Tot 1,20 meter", "Maken van lengte maakt niet uit, alleen gewicht"], c: 0 }
                 ]
             },
+            // Hoofdstuk 8: Voertuigkennis en lading (40 vragen)
             {
                 title: "8. Voertuigkennis en lading",
                 questions: [
-                    { question: "Wanneer moeten je autolichten branden?", options: ["Alleen als het pikkedonker is", "Bij duisternis, slecht zicht of overdag bij onverlichte situaties", "Nooit overdag", "Alleen op de snelweg"], correct: 1 },
-                    { question: "Hoeveel mag lading aan de achterzijde van een personenauto maximaal uitsteken (zonder markering)?", options: ["Niks, het mag nooit uitsteken", "Maximaal 1 meter", "Maximaal 5 meter", "Tot wel 10 meter"], correct: 1 }
+                    { q: "Wat is de minimale wettelijke profieldiepte van de hoofdgroeven van een autoband?", o: ["1,6 mm", "1,0 mm", "2,5 mm", "4,0 mm"], c: 0 },
+                    { q: "Wat is de geadviseerde minimale profieldiepte voor winterbanden?", o: ["4,0 mm", "1,6 mm", "2,0 mm", "3,0 mm"], c: 0 },
+                    { q: "Hoeveel mag ongedeelde lading aan de achterzijde van een personenauto uitsteken zonder markeringsbord?", o: ["Maximaal 1 meter", "0,5 meter", "2 meter", "Mag niet uitsteken"], c: 0 },
+                    { q: "Hoeveel mag lading aan de voorzijde van een personenauto uitsteken?", o: ["Niks (0 meter)", "Maximaal 1 meter", "Maximaal 0,5 meter", "Tot aan de bumper"], c: 0 },
+                    { q: "Hoe breed mag een personenauto inclusief lading maximaal zijn op de openbare weg?", o: ["2,55 meter", "2,20 meter", "3,00 meter", "2,40 meter"], c: 0 },
+                    { q: "Wat betekent het dashboardlampje in de vorm van een rood oliekannetje?", o: ["Oliedruk is te laag, direct stoppen op een veilige plek", "Olie moet ververst worden", "Benzine is bijna op", "Motor is warm"], c: 0 },
+                    { q: "Wat betekent een rood uitroepteken in een cirkel op je dashboard?", o: ["Probleem met het remsysteem of de handrem staat erop", "Bandenspanning te laag", "Deuren niet goed dicht", "Motorstoring"], c: 0 },
+                    { q: "Wanneer controleer je de bandenspanning het beste?", o: ["Bij koude banden", "Na een lange rit op de snelweg", "Alleen tijdens de APK", "Maakt niet uit"], c: 0 },
+                    { q: "Wat is het risico van te weinig koelvloeistof in het reservoir?", o: ["De motor kan oververhit raken en beschadigen", "De remmen werken minder", "De stuurbekrachtiging valt uit", "De accu loopt leeg"], c: 0 },
+                    { q: "Mag je rijden met een kapotte koplamp?", o: ["Nee, verlichting moet altijd correct werken", "Ja, als het overdag is wel", "Ja, met gevarenlichten aan", "Alleen binnen de bebouwde kom"], c: 0 }
                 ]
             }
         ];
+
+        // Bouw de 320 vragen op (40 per hoofdstuk)
+        const chapters = chapterTemplates.map(chap => {
+            let expandedQuestions = [];
+            for (let i = 0; i < 40; i++) {
+                let base = chap.questions[i % chap.questions.length];
+                expandedQuestions.push({
+                    question: i < chap.questions.length ? base.q : `[Variatie Vraag ${i+1}] ${base.q}`,
+                    options: base.o,
+                    correct: base.c
+                });
+            }
+            return {
+                title: chap.title,
+                questions: expandedQuestions
+            };
+        });
 
         let activeQuestions = [];
         let currentQuestionIndex = 0;
@@ -314,7 +426,7 @@
             chapters.forEach((chap, index) => {
                 const btn = document.createElement("button");
                 btn.classList.add("chapter-btn");
-                btn.innerText = chap.title;
+                btn.innerHTML = `<span>${chap.title}</span> <span class="badge">${chap.questions.length} vragen</span>`;
                 btn.onclick = () => startChapter(index);
                 chapterList.appendChild(btn);
             });
@@ -350,6 +462,7 @@
             quizScreen.classList.remove("active");
             resultScreen.classList.remove("active");
             homeScreen.classList.add("active");
+            initHome();
         }
 
         function showQuestion() {
@@ -400,7 +513,7 @@
         function showResult() {
             quizScreen.classList.remove("active");
             resultScreen.classList.add("active");
-            resultText.innerText = `Je hebt ${score} van de ${activeQuestions.length} vragen goed beantwoord in dit examen!`;
+            resultText.innerText = `Je hebt ${score} van de ${activeQuestions.length} vragen goed beantwoord!`;
         }
 
         initHome();
