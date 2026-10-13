@@ -1,1 +1,260 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autotheorie Oefenen 🚗</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
+        body {
+            background-color: #0F172A;
+            color: #FFFFFF;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: #1E293B;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 8px;
+            color: #FFFFFF;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #94A3B8;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .quiz-box {
+            display: none;
+        }
+
+        .quiz-box.active {
+            display: block;
+        }
+
+        .question {
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background: #334155;
+            color: #FFFFFF;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s;
+        }
+
+        .option-btn:hover {
+            background: #475569;
+        }
+
+        .option-btn.correct {
+            background: #10B981 !important;
+        }
+
+        .option-btn.wrong {
+            background: #EF4444 !important;
+        }
+
+        .next-btn, .start-btn {
+            background: #518EF0;
+            color: #FFFFFF;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .next-btn:hover, .start-btn:hover {
+            background: #3b82f6;
+        }
+
+        .score-card {
+            text-align: center;
+        }
+
+        .score-card h2 {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .score-card p {
+            color: #94A3B8;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Autotheorie Leren 🚗</h1>
+        <p class="subtitle">Oefen je CBR autotheorie eenvoudig online</p>
+
+        <!-- Startscherm -->
+        <div id="start-screen" class="quiz-box active">
+            <p style="text-align: center; color: #94A3B8; margin-bottom: 20px;">
+                Test je kennis met officiële oefenvragen over voorrang, verkeersborden en snelheid.
+            </p>
+            <button class="start-btn" onclick="startQuiz()">Start Oefentoets</button>
+        </div>
+
+        <!-- Vragen Scherm -->
+        <div id="quiz-screen" class="quiz-box">
+            <div id="question-counter" style="color: #94A3B8; font-size: 14px; margin-bottom: 8px;">Vraag 1 van 5</div>
+            <div class="question" id="question-text">Hier komt de vraag...</div>
+            <div class="options" id="options-container">
+                <!-- Opties worden hier dynamisch ingeladen -->
+            </div>
+            <button class="next-btn" id="next-btn" style="display: none;" onclick="nextQuestion()">Volgende Vraag</button>
+        </div>
+
+        <!-- Resultaat Scherm -->
+        <div id="result-screen" class="quiz-box score-card">
+            <h2>Toets Afgerond! 🎉</h2>
+            <p id="result-text">Je hebt X van de Y vragen goed.</p>
+            <button class="start-btn" onclick="startQuiz()">Opnieuw Oefenen</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Hoe hard mag je maximaal rijden op een autosnelweg in Nederland (tenzij anders aangegeven)?",
+                options: ["100 km/u (overdag)", "120 km/u", "130 km/u", "100 km/u de hele dag"],
+                correct: 0
+            },
+            {
+                question: "Wie heeft er voorrang op een gelijkwaardig kruispunt?",
+                options: ["Voetgangers altijd", "Bestuurders van rechts", "Bestuurders van links", "Degene die het hardst rijdt"],
+                correct: 1
+            },
+            {
+                question: "Wat betekent een rond blauw bord met een witte pijl naar rechts?",
+                options: ["Je mag hier niet rechtsaf", "Verplichte rijrichting: rechts", "Uitsluitend voor vrachtwagens", "Advisservice rechts"],
+                correct: 1
+            },
+            {
+                question: "Wanneer ben je verplicht je gordel te dragen?",
+                options: ["Alleen buiten de bebouwde kom", "Alleen sneller dan 50 km/u", "Altijd als de auto rijdt", "Alleen op de snelweg"],
+                correct: 2
+            },
+            {
+                question: "Wat is de maximum alcohollimiet voor een beginnende bestuurder?",
+                options: ["0.0 promille (0.2 mag)", "0.2 promille (ongeveer 1 glas)", "0.5 promille", "0.8 promille"],
+                correct: 1
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        const startScreen = document.getElementById("start-screen");
+        const quizScreen = document.getElementById("quiz-screen");
+        const resultScreen = document.getElementById("result-screen");
+        const questionText = document.getElementById("question-text");
+        const optionsContainer = document.getElementById("options-container");
+        const nextBtn = document.getElementById("next-btn");
+        const questionCounter = document.getElementById("question-counter");
+        const resultText = document.getElementById("result-text");
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            startScreen.classList.remove("active");
+            resultScreen.classList.remove("active");
+            quizScreen.classList.add("active");
+            showQuestion();
+        }
+
+        function showQuestion() {
+            nextBtn.style.display = "none";
+            const currentQ = questions[currentQuestionIndex];
+            questionCounter.innerText = `Vraag ${currentQuestionIndex + 1} van ${questions.length}`;
+            questionText.innerText = currentQ.question;
+            optionsContainer.innerHTML = "";
+
+            currentQ.options.forEach((option, index) => {
+                const btn = document.createElement("button");
+                btn.classList.add("option-btn");
+                btn.innerText = option;
+                btn.onclick = () => selectOption(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIndex, selectedBtn) {
+            const currentQ = questions[currentQuestionIndex];
+            const buttons = optionsContainer.getElementsByTagName("button");
+
+            // Schakel alle knoppen uit nadat er één is gekozen
+            for (let btn of buttons) {
+                btn.disabled = true;
+            }
+
+            if (selectedIndex === currentQ.correct) {
+                selectedBtn.classList.add("correct");
+                score++;
+            } else {
+                selectedBtn.classList.add("wrong");
+                buttons[currentQ.correct].classList.add("correct");
+            }
+
+            nextBtn.style.display = "block";
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            quizScreen.classList.remove("active");
+            resultScreen.classList.add("active");
+            resultText.innerText = `Je hebt ${score} van de ${questions.length} vragen goed beantwoord!`;
+        }
+    </script>
+</body>
+</html>
